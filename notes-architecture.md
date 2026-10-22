@@ -1,4 +1,6 @@
-# Notes d'architecture
+# Notes d'architecture | OlympicGamesStarter
+
+# Partie 1 - Audit du starter
 
 ### Objectifs du document
 - Identifier les mauvaises pratiques, la dette technique et les points de fragilité.
@@ -227,3 +229,263 @@ Plusieurs problèmes retrouvés dans ce bout de code.
 - La route ``/not-found`` fait doublon avec le wildcard ``**`` et **n'est donc jamais utilisée** : Aucun ``navigate(['/not-found'])`` trouvé dans le code. C'est avec cette route qu'il faut rédiriger quand un pays n'existe pas. On parle d'une route préparée mais oubliée.
 
 - ``routerLink=""`` pour le bouton retour fonctionne correctement, cependant le cahier des charges demande un ``routerLink="/"``.
+
+## 2.11 - Les tests
+
+Pour voir si l'application fonctionnait, la commande ``npm test`` a été lancé. Une erreur est survenue et ça compile pas l'application :
+```
+Error: src/app/app.component.spec.ts:26:16 - error TS2339: Property 'title' does not exist on type 'AppComponent'.
+
+26     expect(app.title).toEqual('olympic-games-starter');
+                  ~~~~~
+```
+
+``app.component.spec.ts`` est le spec généré par défaut du CLI : il va venir tester un ``title`` et un ``.content span`` qui ont été supprimés de ``AppComponent`` sans que le test soit mis à jour.
+
+Autre problème, deux autres specs sont tout aussi cassés, mais cette fois c'est pendant le runtime : ``home.component.spec.ts`` et ``country.component.spec.ts`` : Ils déclarent leur composant sans fournir ``HttpClinet`` et ``ActivatedRoute``, ça provoque un échec d'injection.
+
+Bien que les tests ne soient pas dans les critères d'acceptation du projet, le mieux est quand même de les faire, pour éviter les problèmes de compilation à l'avenir.
+
+---
+# Partie 2 - Architecture Cible
+
+Avant de préparer l'architecture, il faut poser certains points important.
+
+Actuellement, chaque composant va chercher la donnée **lui-même**, il connaît son URL, et il refait ses propres calculs. L'objectif du projet est **qu'un seul fichier sait où est la donnée, et tout le reste la reçoit.**
+
+Une question que l'on peut se poser : "**Si un jour, le mock JSON devient une API REST, qu'est-ce qu'il va casser ?**"
+> Si la réponse devient "Un seul fichier", le découpage de l'architecture sera bon.
+
+## 1. Architecture souhaité
+
+```
+src/
+├── app/
+│   ├── components/ (Présentationnels et réutilisables)
+│   │   ├── header/ (Pour le titre et la liste d'indicateurs)
+│   │   ├── pie-chart/ (Pour les canvas pie + cycle de vie Chart.js)
+│   │   ├── line-chart/ (Pour les canvas line + cycle de vie Chart.js)
+│   │   └── state-panel/ (Les états loading / empty / error)
+│   │
+│   ├── models/ (Contrats de données, interfaces seules)
+│   │   ├── olympic.model.ts
+│   │   ├── participation.model.ts
+│   │   ├── indicator.model.ts
+│   │   └── view-state.model.ts
+│   │
+│   ├── pages/
+│   │   ├── dashboard/ (Anciennement home/)
+│   │   ├── country-detail/ (Anciennement country/)
+│   │   └── not-found/
+│   │
+│   ├── services/ (Seul accès aux données)
+│   │   └── data.service.ts
+│   │
+│   ├── app.component.{ts,html,scss}
+│   ├── app.module.ts
+│   └── app-routing.module.ts
+│
+├── assets/mock/olympic.json
+│
+├── environments/
+│   ├── environment.ts
+│   └── environment.prod.ts
+│
+├── styles/
+│   ├── variables.scss (Couleurs de marque, espacements)
+│   └── breakpoints.scss (Les résolutions 1200 / 768 / 767px)
+└── styles.scss
+```
+
+## 2. Les quatres blocs
+
+### 2.1 - ``models/`` - Les contrats
+
+On parle d'interfaces pures, aucune logique, aucune dépendance Angular. En gros, c'est le vocabulaire commun du reste de l'application.
+
+
+| Fichier | Contenu | Origine |
+| --- | --- | --- |
+| ``olympic.model.ts`` | ``Olympic { id, country, participations }`` | Fourni tel quel par la spécification technique |
+| ``participation.model.ts`` | ``Participation { id, year, city, medalsCount, athleteCount }`` | Fourni tel quel par la spécification technique |
+| ``indicator.model.ts`` | ``Indicator { label: string; value: number / string }`` | Déduit de "Un indicateur étant caractérisé par un libellé et une valeur"
+| ``view-state.model.ts`` | ``type ViewState = 'loading' / 'loaded' / 'empty' / 'error'`` | Déduit des trois états exigés (loading, empty, error)
+| ``country-medals.model.ts`` | ``CountryMedals { id: number; country: string; total: number }`` | C'est une forme dérivée qui est consommée par le pie chart
+
+Ici, pour correspondre à la convention Angular, on rédige un fichier par concept. Les deux premiers fichiers sont copiés-collés de la spécification technique.
+
+Pourquoi ``ViewState`` ? La spécification technique ne le demande pas. Pourtant imaginez : Trois états à gérer * 2 pages : La même cascade de booléens écrite deux fois, ajoutez-y la combinaison absurde autorisée (``loading && error`` à la fois). 
+
+Une union de chaînes de caractères va coûter **une ligne**, ça rend les états mutuellement exclusifs par construction, et du coup ça donne des templates lisibles (``*ngIf="state === 'loading'"``).
+
+### 2.2 - ``services/`` - La porte d'accès des données
+
+Création nécessaire du fichier ``DataService``, qui sera **le seul fichier de l'application autorisé à injecter** ``HttpClient``.
+
+**Responsabilités du fichier ``DataService``**
+- **Charger** la donnée une fois (``environment.apiUrl``), jamais deux fois.
+- **Diffuser** via un ``BehaviorSubject<Olympic[]>``, les abonnés tardifs reçoivent immédiatement la dernière valeur.
+- **Exposer les agrégats** calculés une seule fois :
+  - Nombre de pays,
+  - Nombre d'éditions,
+  - Total de médailles par pays,
+  - Total d'athlètes.
+- **Chercher un pays par son id**, en retournant explicitement ``Olympic | undefined``. Le type force l'appelant à traiter le cas manquant, ça réglera le crash provoqué exposé en ``Partie 1 - 2.5``.
+- **Attraper les erreurs** (``catchError``) et les transformer en état ``error`` exploitable, plutôt qu'avoir une exception silencieuse.
+
+**Surface publique visée (En réflexion)**
+```
+@Injectable({ providedIn: 'root' })
+export class DataService {
+
+  // Chargé si nécessaire et va renvoyer le flux des données.
+  getOlympics(): Observable<Olympic[]>
+
+  // Un pays par son id -> "undefined" si l'id n'existe pas.
+  getOlympicById(id: number): Observable<Olympic | undefined>
+
+  // Les KPIs du dashboard.
+  getCountryCount(): Observable<number>
+  getGameCount(): Observable<number>
+
+  // Médailles totaux par pays, prêts pour le pie chart (avec l'id conservé pour la navigation).
+  getMedalsByCountry(): Observable<CountryMedals[]>
+
+  // Cycle de vie du chargement, utilisé par StatePanelComponent.
+  getState(): Observable<ViewState>
+}
+```
+
+Attention à la méthode ``getState()`` : elle décrira l'état du chargement, partagé sur toute l'application. Le cas *empty* qui est propre à la page de détails des pays n'est pas un état du service de l'application mais une conclusion réalisé lors du chargement de la page. Obtenu par ``undefined`` de ``getOlympicById()``.
+
+### 2.3 - ``components/`` - Les présentationnels
+
+Une règle commune est définie pour les composants. **Aucun n'injecte de service et aucun ne connaît le routeur.**
+
+Réception par ``@Input()`` et signalement par ``@Output()``.
+
+| Composant | Contrat | Utilisé par | Résout |
+| --- | --- | --- | --- |
+| ``HeaderComponent`` | ``@Input() title``, ``@Input() indicators: Indicator[]`` | Les 2 pages | En-tête dupliquée (Partie 1 - 2.8), exigence explicite du CDC |
+| ``PieChartComponent`` | ``@Input() labels``, ``values``, ``description``, ``@Output() sliceClick: number`` | Dashboard | Cycle de vie Chart.js (Partie 1 - 2.7), Navigation dans le callback (Partie 1 - 2.1) |
+| ``LineChartComponent`` | ``@Input() labels``, ``values``, ``seriesLabel``, ``description`` | Détails des pays | Même chose que PieChartComponent |
+| ``StatePanelComponent`` | ``@Input() state: ViewState``, ``message``, ``showBackLink`` | Les 2 pages | Les états absents |
+
+Attention : Deux points méritent d'être justifiés.
+
+**Pourquoi des composants graphe alors qu'ils ne servent qu'une fois chacun ?** - On cherche pas le réutiliser, mais à l'isoler. Cette méthode débloque un problème signalé en ``Partie 1 - 2.7``.
+
+Aujourd'hui ``new Chart("DashboardPieChart")`` est appelé depuis le callback HTTP, en supposant que le canvas est déjà dans le DOM. Si on enveloppe le canvas dans un ``*ngIf`` pour afficher l'état *loading*, le canvas ne va plus exister au moment de l'appel et donc le graphe va disparaître.
+
+**Pourquoi un ``@Output() sliceClick: number`` plutôt qu'une navigation directe ?** - C'est simple, le graphe n'a pas à connaître l'existence des pays ainsi que du routeur. On lui signale "*On vient de cliquer sur l'élément 3*" donc la page doit traduire l'identifiant et navigation direct.
+
+Cette méthode va rendre les composants génériques (avec leurs noms génériques justifiés) et c'est ça qui va permettre de les tester sans créer un fichier ``RouterTestingModule``.
+
+### 2.4 - ``pages/`` - Les conteneurs
+
+Elles font ce que les présentationnels ne font pas, c'est-à-dire injecter ``DataService``, lire les paramètres de route, tenir l'état ainsi que naviguer.
+
+| Dossier | Classe | Nom CDC | Rôle |
+| --- | --- | --- | --- |
+| ``pages/dashboard/`` | ``DashboardComponent`` | *DashboardPage* | KPIs pays/éditions + pie chart |
+| ``pages/country-detail`` | ``CountryDetailComponent`` | *CountryDetailPage* | KPIs du pays + line chart + retour |
+| ``pages/not-found`` | ``NotFoundComponent`` | *Aucune information* | 404 et cible de redirection |
+
+On a appelé les fichiers avec le suffixe ``Component`` (guide de style Angular, cohérent avec le sélecteur ``app-dashboard``).
+
+## 3. Déplacements virtuels demandés
+
+| Avant | Après | Nature |
+| --- | --- | --- |
+| ``pages/home/*`` | ``pages/dashboard/*`` | Renommé avec ``git mv`` |
+| ``pages/country/*`` | ``pages/country-detail/*`` | Renommé avec ``git mv`` |
+| ``pages/not-found/*`` | Inchangé | Aucune |
+| ``http.get()`` dans ``home.component.ts`` | ``services/data.service.ts`` | Extraction |
+| ``http.get()`` dans ``country.component.ts`` | ``services/data.service.ts`` | Suppression (doublon) |
+| Calculs de totaux (x2 versions) | ``services/data.service.ts`` | Fusion |
+| ``new Chart(...)`` x2 | ``components/{pie,line}-chart/`` | Extraction |
+| En-tête ``.center`` + ``.split`` dans les 2 templates | ``components/header/`` | Fusion |
+| ``'./assets/mock/olympic.json'`` | ``environments/environment*.ts`` | Centralisation |
+| ``#0b868f`` x4 | ``styles/_variables.scss`` | Centralisation |
+| Media Query ``1000px`` | ``styles/_breakpoints.scss`` | Remplacée par 1200/768/767 |
+| ``console.log`` x2, ``.pipe()``, ``.map(i => i)`` | Aucun fichier / dossier | Suppression |
+
+Actuellement, aucun fichier mal rangé est à déplacer, c'est simplement que les fichiers sont au mauvais endroit car **les dossiers ``services/``, ``models/`` et ``components/`` n'existent pas**.
+
+## 4. Le flux de données
+
+```
+   environment.ts ──> apiUrl (Il s'agit d'un mock aujourd'hui mais d'une API demain)
+          │
+          ▼
+  ┌───────────────────────────────┐
+  │        DataService            │ @Injectable({ providedIn: 'root' })
+  │  • HttpClient (uniquement là) │ - Une instance pour toute l'app
+  │  • BehaviorSubject<Olympic[]> │ - Une requête diffusée à tous
+  │  • agrégats + getById()       │ - Un calcul, pas deux
+  └───────────────────────────────┘
+          │ Observable<Olympic[]>
+          ├────────────────────────────────┐
+          ▼                                ▼
+  ┌──────────────────┐            ┌──────────────────────┐
+  │ DashboardComp.   │            │ CountryDetailComp.   │ - PAGES (conteneurs)
+  │ state, KPIs      │            │ state, KPIs, :id     │ - injectent, routent
+  └──────────────────┘            └──────────────────────┘
+    │ @Input  ▲ @Output                    │ @Input
+    ▼         │                            ▼
+  ┌─────────────────────┐        ┌──────────────────────┐ - Composants
+  │ HeaderComponent     │        │ HeaderComponent      │ - Présentationnels
+  │ PieChartComponent   │        │ LineChartComponent   │ - @Input / @Output
+  │ StatePanelComponent │        │ StatePanelComponent  │ - Zéro service
+  └─────────────────────┘        └──────────────────────┘ 
+```
+Pour résumer ce flux de données, **la donné descend, et les événements remontent**.
+
+## 5. Les patterns retenus
+
+Seuls les architectures utilisés seront listés avec le(s) problème(s) qu'elles vont résoudre.
+
+- **Singleton ``@Injectable({ providedIn: 'root' })``** : Une instance unique pour toute l'application. C'est ça qui va permettre au cache d'en être un également : Actuellement, si on navigue de *dashboard vers pays vers dashboard* à nouveau, on réalise **3 requêtes** pour le même fichier utilisé.
+
+  Grâce à un service **Singleton** qui est porteur d'un ``BehaviorSubject`` > On passe d'une requête et deux lecteurs de cache, contre 3 requêtes avant.
+
+  Pourquoi ce changement ? Sur un mock en local, ça ne changerait rien, mais l'objectif du projet est d'avoir une **API REST réelle** derrière, donc ici la différence se verra.
+
+- **Container / Presentational** : La frontière entre ``pages/`` et ``components/`` n'est pas décorative, c'est une règle vérifiable : Si un fichier venant de ``components/``  possède le mot ``inject``, ``Service`` ou encore ``Router``, il est au mauvais endroit.
+
+  C'est une correction importante, car elle bloquerait encore les tests actuellement sans.
+
+- **Observer** : RxJS + pipe ``async``. Les pages s'abonnent via ``| async`` dans le template au lieu de passer par un ``.subscribe()`` manuel. 
+
+  Angular est capable de gérer le désabonnement, ce qui permettra de supprimer la fuite mémoire présente sur ``paramMap`` (Partie 1 - 2.4) ainsi que la signature dépréciée ``subcribe(next, error)`` présentes dans les fichiers.
+
+- **Facade ``DataService`` masque la provenance** : Les pages appellent ``getOlympics()`` sans savoir si derrière on possède un fichier JSON, un appel REST, un cache ou un mock de test. Danger.
+
+- **Injection de dépendances (fournie par Angular)** : Mentionnée pour une raison : c'est elle qui va rendre le pattern Facade exploitable en test.
+
+## 6. Préparation future du back-end
+
+A l'avenir, l'objectif est que le projet passe par une **API REST** plutôt que de rester avec le fichier JSON ``olympic.json``.
+
+Passage du **fichier JSON** à l'**API REST** : Ca change quoi ?
+
+| Fichier | Changement prévu | Quoi exactement |
+| --- | --- | --- |
+| ``environments/environment*.ts`` | Oui | ``apiUrl`` pointera vers le back
+| ``services/data.service.ts`` | Oui | Éventuellement un ``map()`` d'adaptation si le contrat diffère
+| ``models/*.model.ts`` | Possiblement | Seulement si le back renvoie une autre forme
+| ``pages/**`` | Non | Rien |`
+| ``components/**`` | Non | Rien |
+| ``app-routing.module.ts**`` | Non | Rien |
+
+**Un fichier et demi.** À comparer avec l'état actuel, où l'URL est écrite en dur dans deux composants, le typage est ``any`` (donc aucune erreur de compilation ne signalerait un changement de contrat), et où les cas d'erreur réseau n'ont aucun endroit où s'afficher.
+
+**Important : 4 points que le passage à une vraie API rendra non négociables, et que cette structure anticipe :**
+
+- **La latence va devenir visible** : L'état *loading* cesse d'être décoratif. *StatePanelComponent* et *ViewState* existent pour ça.
+
+- **Les erreurs deviennent probables** : 404, 500, timeout, hors-ligne. Le *catchError* du service alimente l'état error plutôt qu'un console.log (Partie 1 - 2.6).
+
+- **Le contrat n'est plus garanti.** : Les interfaces de *models/* deviennent la frontière où une divergence avec le back se voit à la compilation, pas en production.
+
+- **Le volume devient inconnu.** : On parle de 5 pays aujourd'hui, peut-être 200 demain. La palette de 6 couleurs codées en dur (Partie 1 - 2.7) doit être une palette générée, c'est le PieChartComponent qui en portera la responsabilité.
