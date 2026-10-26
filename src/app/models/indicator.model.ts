@@ -1,2 +1,4 @@
-export class Indicator {
+export interface Indicator {
+    label: string;
+    value: number | string;
 }
