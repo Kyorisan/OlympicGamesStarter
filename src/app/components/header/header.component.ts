@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 
-import { Indicator } from 'src/app/models/indicator.model';
+import { Indicator } from '../../models/indicator.model';
 
 @Component({
   selector: 'app-header',
