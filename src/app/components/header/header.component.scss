@@ -1,0 +1,60 @@
+@use 'variables' as v;
+@use 'breakpoints' as bp;
+
+.header {
+    text-align: center;
+}
+
+.header-title {
+    display: inline-block;
+    margin: 0 0 v.$space-lg;
+    padding: v.$space-sm v.$space-lg;
+    background: v.$color-primary;
+    color: #fff;
+    border-radius: v.$radius;
+    font-size: 1.75rem;
+    font-weight: 500;
+
+    @include bp.mobile-only {
+        display: block;
+        font-size: 1.25rem;
+    }
+}
+
+.header-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: v.$space-md;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @include bp.mobile-only {
+        flex-direction: column;
+        align-items: stretch;
+        gap: v.$space-sm;
+    }
+}
+
+.header-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: v.$space-xs;
+    min-width: 160px;
+    padding: v.$space-sm v.$space-md;
+    border: 1px solid v.$color-primary;
+    border-radius: v.$radius;
+}
+
+.header-label {
+    color: v.$color-muted;
+    font-size: 0.9rem;
+}
+
+.header-value {
+    color: v.$color-text;
+    font-size: 1.25rem;
+    font-weight: 700;
+}

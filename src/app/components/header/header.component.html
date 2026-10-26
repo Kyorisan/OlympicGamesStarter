@@ -1,1 +1,10 @@
-<p>header works!</p>
+<header class="header">
+    <h1 class="header-title">{{ title }}</h1>
+
+    <ul class="header-indicators" *ngIf="indicators.length > 0">
+        <li class="header-indicator" *ngFor="let indicator of indicators">
+            <span class="header-label">{{ indicator.label }}</span>
+            <span class="header-value">{{ indicator.value }}</span>
+        </li>
+    </ul>
+</header>
