@@ -14,6 +14,8 @@ describe('LineChartComponent', () => {
 
     fixture = TestBed.createComponent(LineChartComponent);
     component = fixture.componentInstance;
+    component.labels = ['2012', '2016', '2020'];
+    component.values = [28, 28, 40];
     fixture.detectChanges();
   });
 
