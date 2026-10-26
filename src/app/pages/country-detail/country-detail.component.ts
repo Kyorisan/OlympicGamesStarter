@@ -53,7 +53,7 @@ export class CountryDetailComponent {
   private toViewModel(state: ViewState, 
     olympic: Olympic | undefined): CountryDetailViewModel {
 
-      if (state !== 'loading') {
+      if (state !== 'loaded') {
         return { ...EMPTY_VIEW, state };
       }
 
