@@ -1,12 +1,25 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
+
+import { ViewState } from '../../models/view-state.model';
 
 @Component({
   selector: 'app-state-panel',
-  standalone: true,
-  imports: [],
   templateUrl: './state-panel.component.html',
-  styleUrl: './state-panel.component.scss'
+  styleUrls: ['./state-panel.component.scss'],
 })
-export class StatePanelComponent {
 
+export class StatePanelComponent {
+  @Input() state: ViewState = 'loading';
+
+  @Input() message = '';
+
+  @Input() showBackLink = false;
+
+  get emptyMessage(): string {
+    return this.message || 'Aucune donnée disponible.';
+  }
+
+  get errorMessage(): string {
+    return this.message || 'Les données n\'ont pas chargées.';
+  }
 }

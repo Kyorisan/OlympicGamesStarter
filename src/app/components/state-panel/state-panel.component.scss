@@ -1,0 +1,85 @@
+@use 'variables' as v;
+@use 'breakpoints' as bp;
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: v.$space-md;
+}
+
+.state-message {
+  padding: v.$space-xl v.$space-md;
+  text-align: center;
+  color: v.$color-muted;
+
+  p {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+}
+
+.state-error p {
+  color: v.$color-error;
+  font-weight: 600;
+}
+
+.skeleton {
+  background: #e9e9e9;
+  border-radius: v.$radius;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-title {
+  width: 280px;
+  max-width: 100%;
+  height: 48px;
+}
+
+.skeleton-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: v.$space-md;
+
+  @include bp.mobile-only {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+}
+
+.skeleton-card {
+  width: 180px;
+  height: 72px;
+
+  @include bp.mobile-only {
+    width: 100%;
+  }
+}
+
+.skeleton-chart {
+  width: 100%;
+  max-width: 640px;
+  height: 320px;
+
+  @include bp.mobile-only {
+    height: 220px;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

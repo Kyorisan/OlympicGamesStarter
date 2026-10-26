@@ -1,1 +1,19 @@
-<p>state-panel works!</p>
+<div class="state" *ngIf="state === 'loading'" aria-live="polite" aria-busy="true">
+  <p class="visually-hidden">Chargement des données en cours…</p>
+  <div class="skeleton skeleton-title"></div>
+  <div class="skeleton-row">
+    <div class="skeleton skeleton-card"></div>
+    <div class="skeleton skeleton-card"></div>
+  </div>
+  <div class="skeleton skeleton-chart"></div>
+</div>
+
+<div class="state state-message" *ngIf="state === 'empty'" role="status">
+  <p>{{ emptyMessage }}</p>
+  <a routerLink="/" *ngIf="showBackLink">Retour à l'accueil</a>
+</div>
+
+<div class="state state-message state-error" *ngIf="state === 'error'" role="alert">
+  <p>{{ errorMessage }}</p>
+  <a routerLink="/" *ngIf="showBackLink">Retour à l'accueil</a>
+</div>
