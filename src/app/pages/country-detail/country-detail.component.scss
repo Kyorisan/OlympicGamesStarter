@@ -1,0 +1,24 @@
+@use 'variables' as v;
+
+app-line-chart {
+    display: block;
+    margin-top: v.$space-lg;
+}
+
+.back {
+    margin: v.$space-lg 0 0;
+    text-align: center;
+
+    a {
+        display: inline-block;
+        padding: v.$space-sm v.$space-lg;
+        border: 1px solid v.$color-primary;
+        border-radius: v.$radius;
+        text-decoration: none;
+
+        &:hover {
+            background: v.$color-primary;
+            color: #fff;
+        }
+    }
+}

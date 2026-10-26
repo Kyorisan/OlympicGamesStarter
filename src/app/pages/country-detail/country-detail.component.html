@@ -1,1 +1,25 @@
-<p>country-detail works!</p>
+<main class="page" *ngIf="vm$ | async as vm">
+    <ng-container *ngIf="vm.state === 'loaded'; else notLoaded">
+        <app-header [title]="vm.title" [indicators]="vm.indicators"></app-header>
+
+        <app-line-chart
+            [labels]="vm.labels"
+            [values]="vm.values"
+            seriesLabel="Medals"
+            axisLabel="Dates"
+            [description]="vm.description"
+        ></app-line-chart>
+
+        <p class="back">
+            <a routerLink="/" aria-label="Retour au tableau de bord">Retour</a>
+        </p>
+    </ng-container>
+
+    <ng-template #notLoaded>
+        <app-state-panel
+            [state]="vm.state"
+            [message]="vm.message"
+            [showBackLink]="true"
+        ></app-state-panel>
+    </ng-template>
+</main>
