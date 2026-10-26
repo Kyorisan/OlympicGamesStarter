@@ -38,8 +38,8 @@ module.exports = function (config) {
     logLevel: config.LOG_INFO,
     autoWatch: true,
     browsers: ['Chrome'],
-    // Permettra de lancer la suite dans un environnement sans interface
-    // Dans un CLI / Conteneur : npm test -- --browsers=ChromeHeadlessNoSandbox
+    // Permet de lancer la suite dans un environnement sans interface
+    // (CI, conteneur) : npm test -- --browsers=ChromeHeadlessNoSandbox
     customLaunchers: {
       ChromeHeadlessNoSandbox: {
         base: 'ChromeHeadless',
