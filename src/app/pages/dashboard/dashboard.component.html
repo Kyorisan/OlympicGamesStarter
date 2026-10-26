@@ -1,1 +1,15 @@
-<p>dashboard works!</p>
+<main class="page" *ngIf="vm$ | async as vm">
+    <ng-container *ngIf="vm.state === 'loaded'; else notLoaded">
+        <app-header [title]="title" [indicators]="vm.indicators"></app-header>
+            <app-pie-chart
+                [labels]="vm.labels"
+                [values]="vm.values"
+                [description]="vm.description"
+                (sliceClick)="onCountrySelected($event, vm.medals)"
+            ></app-pie-chart>
+    </ng-container>
+
+    <ng-template #notLoaded>
+        <app-state-panel [state]="vm.state"></app-state-panel>
+    </ng-template>
+</main>

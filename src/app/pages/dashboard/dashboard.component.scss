@@ -1,0 +1,6 @@
+@use 'variables' as v;
+
+app-pie-chart {
+    display: block;
+    margin-top: v.$space-lg;
+}
