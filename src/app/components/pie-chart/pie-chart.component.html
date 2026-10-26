@@ -1,1 +1,11 @@
-<p>pie-chart works!</p>
+<div class="chart">
+    <canvas #chartCanvas role="img" [attr.aria-label]="description"></canvas>
+</div>
+
+<ul class="chart-fallback" [attr.aria-label]="description">
+    <li *ngFor="let label of labels; let i = index">
+        <button type="button" class="chart-fallback-item" (click)="sliceClick.emit(i)">
+            {{ label }} — {{ values[i] }}
+        </button>
+    </li>
+</ul>
