@@ -20,4 +20,9 @@ describe('LineChartComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should expose a textuel equivalent of the series', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelectorAll('tbody tr').length).toBe(3);
+  });
 });

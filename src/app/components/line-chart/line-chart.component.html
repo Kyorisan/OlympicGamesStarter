@@ -1,1 +1,19 @@
-<p>line-chart works!</p>
+<div class="chart">
+    <canvas #chartCanvas role="img" [attr.aria-label]="description"></canvas>
+</div>
+
+<table class="visually-hidden">
+    <caption>{{ description }}</caption>
+    <thead>
+        <tr>
+            <th scope="col">{{ axisLabel }}</th>
+            <th scope="col">{{ seriesLabel }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let label of labels; let i = index">
+            <th scope="row">{{ label }}</th>
+            <td>{{ values[i] }}</td>
+        </tr>
+    </tbody>
+</table>
