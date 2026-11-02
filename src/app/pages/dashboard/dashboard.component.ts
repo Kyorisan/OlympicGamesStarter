@@ -62,6 +62,10 @@ export class DashboardComponent {
     }
   }
 
+  onRetry(): void {
+    this.data.reload();
+  }
+
   private buildDescription(medals: CountryMedals[]): string {
     if (medals.length === 0) {
       return 'Aucune donnée à représenter.';

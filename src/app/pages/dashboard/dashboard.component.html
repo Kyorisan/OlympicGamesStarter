@@ -10,6 +10,6 @@
     </ng-container>
 
     <ng-template #notLoaded>
-        <app-state-panel [state]="vm.state"></app-state-panel>
+        <app-state-panel [state]="vm.state" (retry)="onRetry()"></app-state-panel>
     </ng-template>
 </main>
