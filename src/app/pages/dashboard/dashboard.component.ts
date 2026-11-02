@@ -25,6 +25,12 @@ interface DashboardViewModel {
 export class DashboardComponent {
   readonly title = 'Medals per Country';
 
+  readonly intro =
+    "Télésport suit les performances des pays aux Jeux olympiques. " +
+    'Ce graphique présente le nombre total de médailles remportées par ' +
+    'chaque pays, toutes éditions confondues. Sélectionnez un pays pour ' +
+    'consulter le détail de ses participations.';
+
   readonly vm$: Observable<DashboardViewModel> = combineLatest({
     state: this.data.getState(),
     medals: this.data.getMedalsByCountry(),
@@ -60,7 +66,6 @@ export class DashboardComponent {
     if (medals.length === 0) {
       return 'Aucune donnée à représenter.';
     }
-
     const parts = medals.map((medal) => `${medal.country} (${medal.total})`).join(', ');
     return `Nombre de médailles par pays : ${parts}`;
   }
