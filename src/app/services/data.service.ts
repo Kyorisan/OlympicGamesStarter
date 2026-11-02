@@ -78,6 +78,12 @@ export class DataService {
     );
   }
 
+  reload(): void {
+    this.loadTriggered = false;
+    this.state$.next('loading');
+    this.load();
+  }
+
   private load(): void {
     if (this.loadTriggered) {
       return;
