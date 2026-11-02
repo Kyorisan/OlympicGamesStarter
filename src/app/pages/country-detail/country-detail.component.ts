@@ -50,6 +50,10 @@ export class CountryDetailComponent {
     private readonly data: DataService
   ) {}
 
+  onRetry(): void {
+    this.data.reload();
+  }
+
   private toViewModel(state: ViewState, 
     olympic: Olympic | undefined): CountryDetailViewModel {
 
