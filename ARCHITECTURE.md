@@ -142,6 +142,7 @@ l'application**.
 | `getMedalsByCountry()` | `Observable<CountryMedals[]>` | Totaux par pays, triés alphabétiquement |
 | `sumMedals(olympic)` | `number` | Total de médailles d'un pays |
 | `sumAthletes(olympic)` | `number` | Total d'athlètes d'un pays |
+| `reload()` | `void` | Relance le chargement après un échec |
 
 Le chargement est **paresseux et idempotent** : il part au premier appel de
 `getOlympics()` ou `getState()`, et une garde interne empêche toute requête
