@@ -15,5 +15,10 @@
 
 <div class="state state-message state-error" *ngIf="state === 'error'" role="alert">
   <p>{{ errorMessage }}</p>
-  <a routerLink="/" *ngIf="showBackLink">Retour à l'accueil</a>
+  <div class="state-actions">
+    <button type="button" class="state-retry" (click)="retry.emit()">
+      Réessayer
+    </button>
+    <a routerLink="/" *ngIf="showBackLink">Retour à l'accueil</a>
+  </div>
 </div>

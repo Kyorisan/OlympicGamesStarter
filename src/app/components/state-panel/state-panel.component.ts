@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { ViewState } from '../../models/view-state.model';
 
@@ -15,11 +15,13 @@ export class StatePanelComponent {
 
   @Input() showBackLink = false;
 
+  @Output() retry = new EventEmitter<void>();
+
   get emptyMessage(): string {
     return this.message || 'Aucune donnée disponible.';
   }
 
   get errorMessage(): string {
-    return this.message || 'Les données n\'ont pas chargées.';
+    return this.message || 'Les données n\'ont pas pu être chargées.';
   }
 }
