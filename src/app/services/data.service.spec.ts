@@ -121,4 +121,15 @@ describe('DataService', () => {
     expect(latest<ViewState>(service.getState())).toBe('error');
     expect(latest(service.getOlympics())).toEqual([]);
   });
+
+  it('should recover after reload() following a failure', () => {
+    fail();
+    expect(latest<ViewState>(service.getState())).toBe('error');
+
+    service.reload();
+    httpMock.expectOne(environment.apiUrl).flush(FIXTURE);
+
+    expect(latest<ViewState>(service.getState())).toBe('loaded');
+    expect(latest(service.getCountryCount())).toBe(2);
+  });
 });
