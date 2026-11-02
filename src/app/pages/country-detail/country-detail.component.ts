@@ -68,6 +68,13 @@ export class CountryDetailComponent {
       (a, b) => a.year - b.year
     );
 
+    if (participations.length === 0) {
+      return {
+        ...EMPTY_VIEW,
+        message: `Aucune participation enregistrée pour ${olympic.country}.`,
+      };
+    }
+
     return {
       state: 'loaded',
       title: olympic.country,
