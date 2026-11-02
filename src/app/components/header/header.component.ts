@@ -11,5 +11,7 @@ export class HeaderComponent {
 
   @Input() title = '';
 
+  @Input() intro = '';
+
   @Input() indicators: Indicator[] = [];
 }

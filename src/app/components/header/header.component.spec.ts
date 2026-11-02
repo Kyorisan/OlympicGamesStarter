@@ -31,6 +31,17 @@ describe('HeaderComponent', () => {
     );
   })
 
+  it('should render the introduction only when one is provided', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.header-intro')).toBeNull();
+
+    component.intro = 'Télésport suit les performances des pays.';
+    fixture.detectChanges();
+    expect(compiled.querySelector('.header-intro')?.textContent).toContain(
+      'Télésport'
+    );
+  });
+
   it('should render one entry per indicator', () => {
     component.indicators = [
       { label: 'Number of JOs', value: 3 },

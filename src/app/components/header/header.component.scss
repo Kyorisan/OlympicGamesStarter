@@ -21,6 +21,17 @@
     }
 }
 
+.header-intro {
+    max-width: 60ch;
+    margin: 0 auto v.$space-lg;
+    color: v.$color-muted;
+
+    @include bp.mobile-only {
+        font-size: 0.95rem;
+        text-align: left;
+    }
+}
+
 .header-indicators {
     display: flex;
     flex-wrap: wrap;

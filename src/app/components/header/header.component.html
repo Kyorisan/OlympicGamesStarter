@@ -1,6 +1,8 @@
 <header class="header">
     <h1 class="header-title">{{ title }}</h1>
 
+    <p class="header-intro" *ngIf="intro">{{ intro }}</p>
+
     <ul class="header-indicators" *ngIf="indicators.length > 0">
         <li class="header-indicator" *ngFor="let indicator of indicators">
             <span class="header-label">{{ indicator.label }}</span>
