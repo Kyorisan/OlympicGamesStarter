@@ -36,6 +36,26 @@ describe('StatePanelComponent', () => {
     expect(compiled.textContent).toContain('Aucune donnée');
   });
 
+  it('should offer a retry on error and emit it', () => {
+    component.state = 'error';
+    fixture.detectChanges();
+    spyOn(component.retry, 'emit');
+    const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '.state-retry'
+    );
+    expect(button).not.toBeNull();
+    button!.click();
+    expect(component.retry.emit).toHaveBeenCalled();
+  });
+
+  it('should not offer a retry outside the error state', () => {
+    component.state = 'empty';
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('.state-retry')
+    ).toBeNull();
+  });
+
   it('should render nothing once data is loaded', () => {
     component.state = 'loaded';
     fixture.detectChanges();

@@ -42,6 +42,8 @@ class DataServiceStub {
   sumAthletes(olympic: Olympic): number {
     return olympic.participations.reduce((t, p) => t + p.athleteCount, 0);
   }
+
+  reload(): void {}
 }
 
 async function setup(
