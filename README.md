@@ -103,7 +103,7 @@ npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox
 
 ## Fonctionnalités
 
-**Tableau de bord** — route `/`
+**Tableau de bord** - route `/`
 
 - Présentation de l'application
 - Nombre de pays participants et nombre d'éditions des Jeux
@@ -111,7 +111,7 @@ npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox
 - Clic sur une part -> page de détail du pays
 - Alternative accessible au clavier, équivalente au graphique
 
-**Page détail** — route `/country/:id`
+**Page détail** - route `/country/:id`
 
 - Nom du pays, nombre de participations, total de médailles, total d'athlètes
 - Courbe d'évolution des médailles édition par édition
@@ -179,7 +179,7 @@ src/
 
 | Dossier | Injecte un service | Connaît le routeur | Reçoit ses données par |
 |---|---|---|---|
-| `pages/` | oui | oui | injection du `DataService` |
+| `pages/` | oui | oui | Injection du `DataService` |
 | `components/` | non | non | `@Input()` uniquement |
 
 `DataService` est fourni en singleton (`providedIn: 'root'`) et constitue le
@@ -200,7 +200,7 @@ Les données proviennent de `src/assets/mock/olympic.json` : 5 pays, 3 éditions
 (2012 Londres, 2016 Rio, 2020 Tokyo).
 
 L'URL est définie dans `src/environments/environment.ts`. Pour brancher une API
-REST, c'est **le seul fichier à modifier** — aucun composant ni aucune page n'a
+REST, c'est **le seul fichier à modifier** : aucun composant ni aucune page n'a
 connaissance de la provenance des données.
 
 ```ts

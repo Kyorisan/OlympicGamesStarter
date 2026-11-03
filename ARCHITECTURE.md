@@ -342,7 +342,7 @@ déjà :
 
 **`getOlympics()` émet un tableau vide avant l'arrivée des données** : C'est la valeur
 initiale du `BehaviorSubject`. Les pages n'en souffrent pas parce qu'elles
-conditionnent leur affichage à `getState()` — tout nouveau consommateur doit faire de
+conditionnent leur affichage à `getState()` : tout nouveau consommateur doit faire de
 même, sous peine d'afficher « aucune donnée » pendant le chargement.
 
 **Le tri est alphabétique et doit le rester** : `getMedalsByCountry()` trie par nom de
